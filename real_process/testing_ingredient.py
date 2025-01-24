@@ -72,23 +72,30 @@ def load_recipe_names(csv_file_path):
 
 if __name__ == "__main__":
     ingredient_mapping = load_ingredient_mapping(csv_file_path)
-    
+
     input_ingredients = [
         "lettuce",
         "fish"
     ]
-    
+
     ingredient_ids = convert_ingredients_to_ids(input_ingredients, ingredient_mapping)
     print(f"Ingredient IDs: {ingredient_ids}")
-    
-    index_name = "ingredient"  
-    search_results = search_recipes_by_ingredient_ids(es, index_name, ingredient_ids, match_all=True)
-    
-    raw_recipes_csv_path = "../dataset/RAW_recipes.csv" 
-    recipe_names_mapping = load_recipe_names(raw_recipes_csv_path)  
 
-    print("Search Results:")
-    for result in search_results:
-        recipe_id = result["_source"]["id"] 
-        recipe_name = recipe_names_mapping.get(recipe_id, "Name not found in CSV")  
-        print(f"Recipe ID: {recipe_id}, Name: {recipe_name}")
+    index_name = "ingredient"
+    match_all = True
+    search_results = search_recipes_by_ingredient_ids(es, index_name, ingredient_ids, match_all)
+
+    raw_recipes_csv_path = "../dataset/RAW_recipes.csv"
+    recipe_names_mapping = load_recipe_names(raw_recipes_csv_path)
+
+    sorted_results = sorted(
+        search_results,
+        key=lambda result: len(result["_source"]["ingredient_ids"])  
+    )
+
+    print("Search Results (Sorted by Ingredient Count):")
+    for result in sorted_results:
+        recipe_id = result["_source"]["id"]
+        recipe_name = recipe_names_mapping.get(recipe_id, "Name not found in CSV")
+        ingredient_count = len(result["_source"]["ingredient_ids"])  
+        print(f"Recipe ID: {recipe_id}, Name: {recipe_name}, Ingredient Count: {ingredient_count}")
