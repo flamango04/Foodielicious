@@ -4,7 +4,7 @@ from elasticsearch import Elasticsearch
 
 es = Elasticsearch(
     ["https://127.0.0.1:9200"],
-    basic_auth=("elastic", "F-L*fKaaY+mOC2SY=DVE"),
+    basic_auth=("elastic", "QNd1aJP70w8TY91*aIbn"),
     verify_certs=True,
     ca_certs="/Users/macbook/Documents/GitHub/Foodielicious/http_ca.crt",
 )
@@ -74,8 +74,9 @@ if __name__ == "__main__":
     ingredient_mapping = load_ingredient_mapping(csv_file_path)
 
     input_ingredients = [
-        "lettuce",
-        "fish"
+        "beef",
+        "cheese",
+        "egg"
     ]
 
     ingredient_ids = convert_ingredients_to_ids(input_ingredients, ingredient_mapping)
@@ -99,3 +100,5 @@ if __name__ == "__main__":
         recipe_name = recipe_names_mapping.get(recipe_id, "Name not found in CSV")
         ingredient_count = len(result["_source"]["ingredient_ids"])  
         print(f"Recipe ID: {recipe_id}, Name: {recipe_name}, Ingredient Count: {ingredient_count}")
+
+# %%
