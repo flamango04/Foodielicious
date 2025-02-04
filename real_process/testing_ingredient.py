@@ -2,11 +2,20 @@
 import csv
 from elasticsearch import Elasticsearch
 
+import os
+print(os.getcwd()) 
+
+#%%
+# es = Elasticsearch(
+#     ["https://172.18.0.2:9200"],
+#     basic_auth=("elastic", "W547xBX*8tj3EAeCkKrF"),
+#     verify_certs=True,
+#     ca_certs="../http_ca.crt",
+# )
 es = Elasticsearch(
-    ["https://127.0.0.1:9200"],
-    basic_auth=("elastic", "QNd1aJP70w8TY91*aIbn"),
-    verify_certs=True,
-    ca_certs="/Users/macbook/Documents/GitHub/Foodielicious/http_ca.crt",
+    ["https://172.31.44.120:9200"],
+    basic_auth=("elastic", "W547xBX*8tj3EAeCkKrF"),
+    verify_certs=False
 )
 
 csv_file_path = "../dataset/ingr_map.csv"
@@ -70,6 +79,7 @@ def load_recipe_names(csv_file_path):
             recipe_names[recipe_id] = recipe_name
     return recipe_names
 
+#%%
 if __name__ == "__main__":
     ingredient_mapping = load_ingredient_mapping(csv_file_path)
 
@@ -94,6 +104,7 @@ if __name__ == "__main__":
         key=lambda result: len(result["_source"]["ingredient_ids"])  
     )
 
+#%%
     print("Search Results (Sorted by Ingredient Count):")
     for result in sorted_results:
         recipe_id = result["_source"]["id"]
