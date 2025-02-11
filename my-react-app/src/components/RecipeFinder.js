@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, PlusCircle } from "lucide-react";
+import { Search, PlusCircle, X } from "lucide-react";
 import "./RecipeFinder.css"; // Import the CSS file
 
 const RecipeFinder = () => {
@@ -15,6 +15,13 @@ const RecipeFinder = () => {
     setIngredients([...ingredients, ""]);
   };
 
+  const deleteIngredientField = (index) => {
+    if (ingredients.length > 1) {
+      const updatedIngredients = ingredients.filter((_, i) => i !== index);
+      setIngredients(updatedIngredients);
+    }
+  };
+
   const handleSearch = () => {
     console.log("Searching for recipes with:", ingredients);
   };
@@ -25,14 +32,24 @@ const RecipeFinder = () => {
 
       <div className="w-full max-w-md">
         {ingredients.map((ingredient, index) => (
-          <input
-            key={index}
-            type="text"
-            placeholder={`Ingredient ${index + 1}`}
-            value={ingredient}
-            onChange={(e) => handleIngredientChange(index, e.target.value)}
-            className="ingredient-input"
-          />
+          <div key={index} className="input-group">
+            <input
+              type="text"
+              placeholder={`Ingredient ${index + 1}`}
+              value={ingredient}
+              onChange={(e) => handleIngredientChange(index, e.target.value)}
+              className="ingredient-input"
+            />
+            {ingredients.length > 1 && (
+              <button
+                onClick={() => deleteIngredientField(index)}
+                className="delete-btn"
+                aria-label="Delete ingredient"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
