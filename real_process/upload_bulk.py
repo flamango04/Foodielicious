@@ -1,12 +1,12 @@
+#%%
 from elasticsearch import Elasticsearch, helpers
 import json
 
 # Elasticsearch connection configuration
 es = Elasticsearch(
     ["https://localhost:9200"], 
-    basic_auth=("elastic", "F-L*fKaaY+mOC2SY=DVE"), 
-    verify_certs=True,
-    ca_certs="/Users/macbook/Documents/GitHub/Foodielicious/http_ca.crt",  
+    basic_auth=("elastic", "TY3LPHF1VTD4j-dODgyu"), 
+    verify_certs=False,
 )
 
 def bulk_upload_to_es(es, bulk_file_path, index_name):
@@ -30,3 +30,5 @@ index_name = "ingredient"
 bulk_upload_to_es(es, bulk_file_path, index_name)
 
 print(f"Bulk data successfully uploaded to index {index_name}")
+
+# %%

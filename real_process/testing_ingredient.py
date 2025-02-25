@@ -6,17 +6,17 @@ import os
 print(os.getcwd()) 
 
 #%%
-# es = Elasticsearch(
-#     ["https://172.18.0.2:9200"],
-#     basic_auth=("elastic", "W547xBX*8tj3EAeCkKrF"),
-#     verify_certs=True,
-#     ca_certs="../http_ca.crt",
-# )
 es = Elasticsearch(
-    ["https://172.31.44.120:9200"],
-    basic_auth=("elastic", "W547xBX*8tj3EAeCkKrF"),
-    verify_certs=False
+    ["https://localhost:9200"], 
+    basic_auth=("elastic", "TY3LPHF1VTD4j-dODgyu"), 
+    verify_certs=False,
+    ssl_show_warn=False,
 )
+# es = Elasticsearch(
+#     ["https://localhost.248:9200"],
+#     basic_auth=("elastic", "27NqMNCgHBol_n*j0XDv"),
+#     verify_certs=False
+# )
 
 csv_file_path = "../dataset/ingr_map.csv"
 
@@ -104,7 +104,6 @@ if __name__ == "__main__":
         key=lambda result: len(result["_source"]["ingredient_ids"])  
     )
 
-#%%
     print("Search Results (Sorted by Ingredient Count):")
     for result in sorted_results:
         recipe_id = result["_source"]["id"]
