@@ -6,28 +6,25 @@ from dotenv import load_dotenv
 import pandas as pd
 from youtubelinks import search_youtube
 
-# Load environment variables from .env
 load_dotenv()
 
 app = Flask(__name__)
 
-# Load CSV dataset
 MAPPING_CSV_PATH = "../dataset/ingr_map.csv"
 RECIPES_CSV_PATH = "../dataset/RAW_recipes.csv"
 
 df = pd.read_csv(MAPPING_CSV_PATH)
 
 def get_recipes_from_ingredients(ingredients):
-    """Retrieve recipes based on selected ingredients."""
     if not ingredients:
-        return []  # Return an empty list if no ingredients provided
+        return [] 
 
     ingredient_mapping = load_ingredient_mapping(MAPPING_CSV_PATH)
     ingredient_ids = convert_ingredients_to_ids(ingredients, ingredient_mapping)
 
     es = Elasticsearch(
         ["https://localhost:9200"], 
-        basic_auth=("elastic", os.getenv("ELASTIC_PASSWORD")), 
+        basic_auth=("elastic", "TY3LPHF1VTD4j-dODgyu"), 
         verify_certs=False,
         ssl_show_warn=False,
     )
@@ -52,7 +49,6 @@ def get_recipes_from_ingredients(ingredients):
     return recipes
 
 def find_related_ingredients(query):
-    """Find the top-10 related ingredients based on each user's input separately."""
     query = query.lower().strip()
     filtered_df = df[df["processed"].str.contains(query, case=False, na=False)]
     suggestions = filtered_df["processed"].unique()[:10]
@@ -60,7 +56,6 @@ def find_related_ingredients(query):
 
 @app.route("/autocomplete", methods=["GET"])
 def autocomplete():
-    """API to return top-10 ingredient suggestions based on user input"""
     query = request.args.get("query", "")
     if not query:
         return jsonify([])
@@ -75,7 +70,7 @@ def index():
         
         recipes = get_recipes_from_ingredients(ingredients)
 
-        api_key = os.getenv('YOUTUBE_API_KEY')
+        api_key = "AIzaSyAaS-mrZjYwML4-ZKH6A18F2sViuvbfWsM"
         recipe_data = []
         for recipe in recipes:
             query = f"how to make {recipe}"
