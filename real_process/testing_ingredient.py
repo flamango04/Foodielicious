@@ -41,6 +41,8 @@ def convert_ingredients_to_ids(ingredients, ingredient_mapping):
 
 
 def search_recipes_by_ingredient_ids(es, index_name, ingredient_ids, match_all=True):
+    if not ingredient_ids:
+        return []
     if match_all:
         query = {
             "query": {
@@ -82,11 +84,7 @@ def load_recipe_names(csv_file_path):
 if __name__ == "__main__":
     ingredient_mapping = load_ingredient_mapping(csv_file_path)
 
-    input_ingredients = [
-        "beef",
-        "cheese",
-        "egg"
-    ]
+    input_ingredients = []
 
     ingredient_ids = convert_ingredients_to_ids(input_ingredients, ingredient_mapping)
     print(f"Ingredient IDs: {ingredient_ids}")

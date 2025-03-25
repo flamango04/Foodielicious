@@ -1,43 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Find Recipes</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     #suggestions {
-        position: absolute;
-        width: 100%;
-        background: white;
-        border: 1px solid #ddd;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1000;
-        display: none;
+      position: absolute;
+      width: 100%;
+      background: white;
+      border: 1px solid #ddd;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
     }
     .suggestion-item {
-        padding: 10px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
     }
     .suggestion-item:hover {
-        background-color: #f1f1f1;
+      background-color: #f1f1f1;
     }
     .selected-ingredient {
-        display: inline-flex;
-        align-items: center;
-        background-color: #d1e7ff;
-        color: #004085;
-        padding: 5px 10px;
-        margin: 5px;
-        border-radius: 15px;
-        font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      background-color: #d1e7ff;
+      color: #004085;
+      padding: 5px 10px;
+      margin: 5px;
+      border-radius: 15px;
+      font-size: 14px;
     }
     .remove-btn {
-        margin-left: 8px;
-        cursor: pointer;
-        font-weight: bold;
+      margin-left: 8px;
+      cursor: pointer;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -47,14 +47,16 @@
 
     <form method="POST" id="search-form" class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md relative">
       <label for="ingredients" class="block text-gray-700">Enter ingredients:</label>
-      
-      <input type="text" id="ingredients" class="w-full p-2 border rounded mt-2" placeholder="Type an ingredient..." autocomplete="off">
+
+      <input type="text" id="ingredients" class="w-full p-2 border rounded mt-2" placeholder="Type an ingredient..." autocomplete="off" />
 
       <div id="suggestions"></div> <!-- Suggestion Box -->
-      
+
+      <p id="ingredient-error" class="text-red-600 mt-2 text-sm"></p>
+
       <div id="selected-ingredients" class="mt-3 flex flex-wrap"></div> <!-- Selected Ingredients -->
 
-      <input type="hidden" name="selected_ingredients" id="selected_ingredients_input"> <!-- Hidden input for form submission -->
+      <input type="hidden" name="selected_ingredients" id="selected_ingredients_input" />
 
       <button type="submit" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
         Search
@@ -64,88 +66,114 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const inputField = document.getElementById("ingredients");
-        const suggestionBox = document.getElementById("suggestions");
-        const selectedContainer = document.getElementById("selected-ingredients");
-        const hiddenInput = document.getElementById("selected_ingredients_input");
-        const searchForm = document.getElementById("search-form");
-        let selectedIngredients = [];
+      const inputField = document.getElementById("ingredients");
+      const suggestionBox = document.getElementById("suggestions");
+      const selectedContainer = document.getElementById("selected-ingredients");
+      const hiddenInput = document.getElementById("selected_ingredients_input");
+      const errorBox = document.getElementById("ingredient-error");
+      const searchForm = document.getElementById("search-form");
+      let selectedIngredients = [];
 
-        inputField.addEventListener("input", function () {
-            let query = inputField.value.trim();
-            if (query.length < 2) {
-                suggestionBox.style.display = "none";
-                return;
-            }
-
-            fetch(`/autocomplete?query=${query}`)
-                .then(response => response.json())
-                .then(data => {
-                    suggestionBox.innerHTML = "";
-                    if (data.length === 0) {
-                        suggestionBox.style.display = "none";
-                        return;
-                    }
-
-                    suggestionBox.style.display = "block";
-                    data.forEach(item => {
-                        let suggestion = document.createElement("div");
-                        suggestion.textContent = item;
-                        suggestion.classList.add("suggestion-item");
-                        suggestion.onclick = function () {
-                            addIngredient(item);
-                        };
-                        suggestionBox.appendChild(suggestion);
-                    });
-                });
-        });
-
-        inputField.addEventListener("keydown", function (event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                let enteredValue = inputField.value.trim();
-
-                if (enteredValue !== "") {
-                    addIngredient(enteredValue);  
-                } else if (selectedIngredients.length > 0) {
-                    searchForm.submit();  // If empty but ingredients exist, search.
-                }
-            }
-        });
-
-        function addIngredient(ingredient) {
-            if (!selectedIngredients.includes(ingredient)) {
-                selectedIngredients.push(ingredient);
-                updateSelectedIngredients();
-            }
-            inputField.value = "";  
-            suggestionBox.style.display = "none";  
+      inputField.addEventListener("input", function () {
+        let query = inputField.value.trim();
+        if (query.length < 2) {
+          suggestionBox.style.display = "none";
+          return;
         }
 
-        function removeIngredient(ingredient) {
-            selectedIngredients = selectedIngredients.filter(item => item !== ingredient);
-            updateSelectedIngredients();
-        }
+        fetch(`/autocomplete?query=${query}`)
+          .then(response => response.json())
+          .then(data => {
+            suggestionBox.innerHTML = "";
+            if (data.length === 0) {
+              suggestionBox.style.display = "none";
+              return;
+            }
 
-        function updateSelectedIngredients() {
-            selectedContainer.innerHTML = "";
-            selectedIngredients.forEach(ingredient => {
-                let ingredientTag = document.createElement("div");
-                ingredientTag.classList.add("selected-ingredient");
-
-                let removeBtn = document.createElement("span");
-                removeBtn.textContent = " X";
-                removeBtn.classList.add("remove-btn");
-                removeBtn.onclick = function () {
-                    removeIngredient(ingredient);
-                };
-
-                ingredientTag.append(ingredient, removeBtn);
-                selectedContainer.appendChild(ingredientTag);
+            suggestionBox.style.display = "block";
+            data.forEach(item => {
+              let suggestion = document.createElement("div");
+              suggestion.textContent = item;
+              suggestion.classList.add("suggestion-item");
+              suggestion.onclick = function () {
+                addIngredient(item);
+              };
+              suggestionBox.appendChild(suggestion);
             });
+          });
+      });
 
-            hiddenInput.value = selectedIngredients.join(",");
+      inputField.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            let enteredValue = inputField.value.trim().toLowerCase();
+
+            if (enteredValue === "") {
+            if (selectedIngredients.length > 0) {
+                searchForm.submit();
+            }
+            return;
+            }
+            fetch(`/validate_ingredient?ingredient=${encodeURIComponent(enteredValue)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.valid) {
+                errorBox.textContent = `"${enteredValue}" is not in our ingredient list.`;
+                setTimeout(() => {
+                    if (errorBox.textContent === `"${enteredValue}" is not in our ingredient list.`) {
+                    errorBox.textContent = "";
+                    }
+                }, 1000);
+                } else {
+                errorBox.textContent = "";
+                addIngredient(enteredValue);
+                }
+            })
+            .catch(err => {
+                console.error("Validation error:", err);
+                errorBox.textContent = "Unable to validate ingredient.";
+                setTimeout(() => {
+                if (errorBox.textContent === "Unable to validate ingredient.") {
+                    errorBox.textContent = "";
+                }
+                }, 1000);
+            });
         }
+        });
+
+      function addIngredient(ingredient) {
+        if (!selectedIngredients.includes(ingredient)) {
+          selectedIngredients.push(ingredient);
+          updateSelectedIngredients();
+        }
+        inputField.value = "";
+        suggestionBox.style.display = "none";
+      }
+
+      function removeIngredient(ingredient) {
+        selectedIngredients = selectedIngredients.filter(item => item !== ingredient);
+        updateSelectedIngredients();
+      }
+
+      function updateSelectedIngredients() {
+        selectedContainer.innerHTML = "";
+        selectedIngredients.forEach(ingredient => {
+          let tag = document.createElement("div");
+          tag.classList.add("selected-ingredient");
+
+          let removeBtn = document.createElement("span");
+          removeBtn.textContent = " ×";
+          removeBtn.classList.add("remove-btn");
+          removeBtn.onclick = function () {
+            removeIngredient(ingredient);
+          };
+
+          tag.append(ingredient, removeBtn);
+          selectedContainer.appendChild(tag);
+        });
+
+        hiddenInput.value = selectedIngredients.join(",");
+      }
     });
   </script>
 </body>

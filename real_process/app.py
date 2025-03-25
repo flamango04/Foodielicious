@@ -74,6 +74,14 @@ def results_page():
     recipe_data = get_recipe_data_from_ingredients(ingredients)
     return render_template("results.html", ingredients=selected_ingredients, recipe_data=recipe_data)
 
+@app.route("/validate_ingredient", methods=["GET"])
+def validate_ingredient():
+    ingredient = request.args.get("ingredient", "").lower().strip()
+    if ingredient in ingredient_mapping:
+        return jsonify({"valid": True})
+    return jsonify({"valid": False})
+
+
 @app.route("/recipe/<int:recipe_id>")
 def recipe_detail(recipe_id):
     recipe_name = recipe_names_mapping.get(recipe_id, "Recipe Not Found")
