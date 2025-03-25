@@ -8,9 +8,8 @@ print(os.getcwd())
 #%%
 es = Elasticsearch(
     ["https://localhost:9200"], 
-    basic_auth=("elastic", "TY3LPHF1VTD4j-dODgyu"), 
-    verify_certs=False,
-    ssl_show_warn=False,
+    basic_auth=("elastic", "zvAznSMH1c10Fn2QXd4H"), 
+    verify_certs=False
 )
 # es = Elasticsearch(
 #     ["https://localhost.248:9200"],

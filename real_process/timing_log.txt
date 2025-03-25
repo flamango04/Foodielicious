@@ -1,0 +1,51 @@
+Search round for ingredients: ['eggs', 'butter lettuce']
+ingredient_conversion: 0.0001 seconds
+elasticsearch_connection: 0.0439 seconds
+elasticsearch_search: 0.0564 seconds
+sorting_results: 0.0001 seconds
+youtube_api_calls: 4.7504 seconds
+total: 4.8529 seconds
+========================================
+Search round for ingredients: ['egg', 'eggplant']
+ingredient_conversion: 0.0001 seconds
+elasticsearch_connection: 0.0420 seconds
+elasticsearch_search: 0.0641 seconds
+sorting_results: 0.0001 seconds
+youtube_api_calls: 4.6075 seconds
+total: 4.7153 seconds
+========================================
+Search round for ingredients: ['egg', 'beef']
+ingredient_conversion: 0.0001 seconds
+elasticsearch_connection: 0.0422 seconds
+elasticsearch_search: 0.2240 seconds
+sorting_results: 0.0001 seconds
+total: 0.2682 seconds
+========================================
+Search round for ingredients: ['egg', 'beef', 'fish']
+ingredient_conversion: 0.0001 seconds
+elasticsearch_connection: 0.0433 seconds
+elasticsearch_search: 0.0498 seconds
+sorting_results: 0.0000 seconds
+total: 0.0948 seconds
+========================================
+Search round for ingredients: ['egg', 'beef']
+ingredient_conversion: 0.0000 seconds
+elasticsearch_connection: 0.0124 seconds
+elasticsearch_search: 0.0434 seconds
+sorting_results: 0.0002 seconds
+total: 0.0564 seconds
+========================================
+Search round for ingredients: ['egg', 'beef']
+ingredient_conversion: 0.0001 seconds
+elasticsearch_connection: 0.0273 seconds
+elasticsearch_search: 0.0615 seconds
+sorting_results: 0.0001 seconds
+total: 0.0907 seconds
+========================================
+Search round for ingredients: ['egg', 'beef']
+ingredient_conversion: 0.0001 seconds
+elasticsearch_connection: 0.0271 seconds
+elasticsearch_search: 0.0552 seconds
+sorting_results: 0.0001 seconds
+total: 0.0841 seconds
+========================================

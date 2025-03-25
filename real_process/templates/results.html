@@ -1,47 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Recipe Results</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Recipes Results</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
   <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">Recipes for: "{{ ingredients }}"</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center">Recipes Found</h1>
 
-    {% if recipe_data %}
-      <div class="space-y-6">
+    <div class="bg-white p-4 rounded-lg shadow-md">
+      <h2 class="text-2xl font-semibold">Results:</h2>
+      <ul class="mt-4 space-y-3">
         {% for recipe in recipe_data %}
-          <div class="bg-white p-4 rounded-lg shadow-md">
-            <!-- Display Recipe Name -->
-            <h2 class="text-2xl font-semibold">{{ recipe.name }}</h2>
-
-            <!-- Display YouTube Videos -->
-            {% if recipe.videos %}
-              <h3 class="mt-2 font-medium">YouTube Videos:</h3>
-              <ul class="space-y-2">
-                {% for video in recipe.videos %}
-                  <li class="flex items-center space-x-4">
-                    <img src="{{ video.thumbnail }}" alt="Video Thumbnail" class="w-32 h-24 object-cover rounded">
-                    <a href="{{ video.link }}" target="_blank" class="text-blue-500 hover:underline">
-                      Watch on YouTube
-                    </a>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="text-gray-500">No videos found.</p>
-            {% endif %}
-          </div>
+          <li class="flex items-center justify-between border-b pb-2">
+            <span class="text-gray-800">{{ recipe.name }}</span>
+            <a href="/recipe/{{ recipe.id }}" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Detail</a>
+          </li>
         {% endfor %}
-      </div>
-    {% else %}
-      <p class="text-center text-gray-600">No recipes found for the provided ingredients.</p>
-    {% endif %}
+      </ul>
+    </div>
 
     <div class="mt-6 text-center">
-      <a href="/" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Back</a>
+      <a href="/" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Back to Search</a>
     </div>
   </div>
 </body>

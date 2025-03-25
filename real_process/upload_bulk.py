@@ -5,7 +5,7 @@ import json
 # Elasticsearch connection configuration
 es = Elasticsearch(
     ["https://localhost:9200"], 
-    basic_auth=("elastic", "TY3LPHF1VTD4j-dODgyu"), 
+    basic_auth=("elastic", "zvAznSMH1c10Fn2QXd4H"), 
     verify_certs=False,
 )
 

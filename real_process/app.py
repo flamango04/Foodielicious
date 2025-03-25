@@ -1,91 +1,93 @@
 import os
-from flask import Flask, render_template, request, jsonify
-from elasticsearch import Elasticsearch
-from testing_ingredient import load_ingredient_mapping, convert_ingredients_to_ids, search_recipes_by_ingredient_ids, load_recipe_names
-from dotenv import load_dotenv
+import time
+import json
 import pandas as pd
+from flask import Flask, render_template, request, jsonify, session
+from elasticsearch import Elasticsearch
+from dotenv import load_dotenv
+from testing_ingredient import load_ingredient_mapping, convert_ingredients_to_ids, search_recipes_by_ingredient_ids, load_recipe_names
 from youtubelinks import search_youtube
 
 load_dotenv()
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev")  # Required for session
 
+# === Load Data ===
 MAPPING_CSV_PATH = "../dataset/ingr_map.csv"
 RECIPES_CSV_PATH = "../dataset/RAW_recipes.csv"
+REVIEW_JSON_PATH = "../dataset/recipes_reviews.json"
+YOUTUBE_API_KEY = "AIzaSyAaS-mrZjYwML4-ZKH6A18F2sViuvbfWsM"
 
+ingredient_mapping = load_ingredient_mapping(MAPPING_CSV_PATH)
 df = pd.read_csv(MAPPING_CSV_PATH)
+recipe_names_mapping = load_recipe_names(RECIPES_CSV_PATH)
 
-def get_recipes_from_ingredients(ingredients):
-    if not ingredients:
-        return [] 
-
-    ingredient_mapping = load_ingredient_mapping(MAPPING_CSV_PATH)
-    ingredient_ids = convert_ingredients_to_ids(ingredients, ingredient_mapping)
-
-    es = Elasticsearch(
-        ["https://localhost:9200"], 
-        basic_auth=("elastic", "TY3LPHF1VTD4j-dODgyu"), 
-        verify_certs=False,
-        ssl_show_warn=False,
-    )
-
-    index_name = "ingredient"
-    match_all = True
-    search_results = search_recipes_by_ingredient_ids(es, index_name, ingredient_ids, match_all)
-
-    recipe_names_mapping = load_recipe_names(RECIPES_CSV_PATH)
-    sorted_results = sorted(
-        search_results,
-        key=lambda result: len(result["_source"]["ingredient_ids"])
-    )
-
-    recipes = []
-    for result in sorted_results:
-        recipe_id = result["_source"]["id"]
-        recipe_name = recipe_names_mapping.get(recipe_id, "Name not found")
-        recipes.append(recipe_name)
-    
-    print("Recipes found:", recipes)
-    return recipes
-
-def find_related_ingredients(query):
-    query = query.lower().strip()
-    filtered_df = df[df["processed"].str.contains(query, case=False, na=False)]
-    suggestions = filtered_df["processed"].unique()[:10]
-    return list(suggestions)
+with open(REVIEW_JSON_PATH) as f:
+    all_reviews = json.load(f)
 
 @app.route("/autocomplete", methods=["GET"])
 def autocomplete():
     query = request.args.get("query", "")
     if not query:
         return jsonify([])
-    
-    return jsonify(find_related_ingredients(query))
+    query = query.lower().strip()
+    filtered_df = df[df["processed"].str.contains(query, case=False, na=False)]
+    suggestions = sorted(set(filtered_df["processed"].unique()), key=len)[:10]
+    return jsonify(list(suggestions))
+
+def get_recipe_data_from_ingredients(ingredients):
+    ingredient_ids = convert_ingredients_to_ids(ingredients, ingredient_mapping)
+    es = Elasticsearch(
+        ["https://localhost:9200"],
+        basic_auth=("elastic", "zvAznSMH1c10Fn2QXd4H"),
+        verify_certs=False
+    )
+    search_results = search_recipes_by_ingredient_ids(es, "ingredient", ingredient_ids, True)
+    sorted_results = sorted(search_results, key=lambda r: len(r["_source"]["ingredient_ids"]))
+    recipe_data = []
+    for r in sorted_results:
+        recipe_id = r["_source"]["id"]
+        recipe_name = recipe_names_mapping.get(recipe_id, "Name not found")
+        recipe_data.append({
+            "id": recipe_id,
+            "name": recipe_name
+        })
+    return recipe_data
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         selected_ingredients = request.form.get("selected_ingredients", "").strip()
+        session["selected_ingredients"] = selected_ingredients
         ingredients = [i.strip() for i in selected_ingredients.split(",") if i.strip()]
-        
-        recipes = get_recipes_from_ingredients(ingredients)
-
-        api_key = "AIzaSyAaS-mrZjYwML4-ZKH6A18F2sViuvbfWsM"
-        recipe_data = []
-        for recipe in recipes:
-            query = f"how to make {recipe}"
-            video_results = search_youtube(query, api_key)  
-            recipe_data.append({
-                "name": recipe,
-                "videos": video_results  
-            })
-
-        print("Final recipe data:", recipe_data) 
+        recipe_data = get_recipe_data_from_ingredients(ingredients)
 
         return render_template("results.html", ingredients=selected_ingredients, recipe_data=recipe_data)
 
     return render_template("index.html")
 
+@app.route("/results")
+def results_page():
+    selected_ingredients = session.get("selected_ingredients", "")
+    ingredients = [i.strip() for i in selected_ingredients.split(",") if i.strip()]
+    recipe_data = get_recipe_data_from_ingredients(ingredients)
+    return render_template("results.html", ingredients=selected_ingredients, recipe_data=recipe_data)
+
+@app.route("/recipe/<int:recipe_id>")
+def recipe_detail(recipe_id):
+    recipe_name = recipe_names_mapping.get(recipe_id, "Recipe Not Found")
+    video_results = search_youtube(f"how to make {recipe_name}", api_key=YOUTUBE_API_KEY)
+
+    review_data = all_reviews.get(str(recipe_id), {})
+    ratings = review_data.get("rating", [])
+    reviews = review_data.get("review", [])
+    ratings_reviews = list(zip(ratings, reviews))
+
+    return render_template("recipe_detail.html",
+                           recipe_name=recipe_name,
+                           video_results=video_results,
+                           ratings_reviews=ratings_reviews)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -4,7 +4,7 @@ import shutil
 import kagglehub
 
 # Specify the target folder
-custom_folder = "/Users/macbook/Documents/GitHub/Foodielicious/dataset"
+custom_folder = "dataset"
 
 # Create the folder if it does not exist
 os.makedirs(custom_folder, exist_ok=True)
