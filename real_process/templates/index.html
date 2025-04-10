@@ -67,7 +67,17 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center font-sans px-4 transition duration-300 ease-in-out">
 
-  <!-- 🌙 Dark Mode Toggle -->
+  <div class="absolute top-4 left-6 space-x-4 text-sm">
+    {% if logged_in %}
+      <span class="text-gray-700 dark:text-gray-300">👤 {{ current_user }}</span>
+      <a href="/profile" class="text-purple-600 underline">Profile</a>
+      <a href="/logout" class="text-red-500 underline">Logout</a>
+    {% else %}
+      <a href="/login" class="text-blue-600 underline">Login</a>
+      <a href="/register" class="text-green-600 underline">Register</a>
+    {% endif %}
+  </div>
+
   <div class="absolute top-4 right-6">
     <label class="flex items-center space-x-2 cursor-pointer text-sm">
       <span class="text-gray-700 dark:text-gray-300">Dark Mode</span>
@@ -120,21 +130,11 @@
       const toggle = document.getElementById("toggle-theme");
       let selectedIngredients = [];
 
-      // 🍳 Ingredient Emoji Mapping
       const emojiMap = {
-        egg: "🥚",
-        tomato: "🍅",
-        milk: "🥛",
-        chicken: "🍗",
-        garlic: "🧄",
-        cheese: "🧀",
-        onion: "🧅",
-        fish: "🐟",
-        banana: "🍌",
-        apple: "🍎",
+        egg: "🥚", tomato: "🍅", milk: "🥛", chicken: "🍗", garlic: "🧄",
+        cheese: "🧀", onion: "🧅", fish: "🐟", banana: "🍌", apple: "🍎",
       };
 
-      // 🌙 Theme Toggle
       const root = document.documentElement;
       toggle.checked = localStorage.getItem("theme") === "dark";
       applyTheme();
@@ -149,7 +149,6 @@
         document.querySelector('.dot').style.left = toggle.checked ? "calc(100% - 1.25rem)" : "0";
       }
 
-      // ✨ Animate form on load
       setTimeout(() => {
         searchForm.classList.remove("scale-95", "opacity-0");
         searchForm.classList.add("scale-100", "opacity-100");
@@ -188,7 +187,6 @@
         if (event.key === "Enter") {
           event.preventDefault();
           let enteredValue = inputField.value.trim().toLowerCase();
-
           if (enteredValue === "") {
             if (selectedIngredients.length > 0) {
               searchForm.submit();
