@@ -2,7 +2,7 @@ import os
 import time
 import json
 import pandas as pd
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from elasticsearch import Elasticsearch
 from dotenv import load_dotenv
 from testing_ingredient import load_ingredient_mapping, convert_ingredients_to_ids, search_recipes_by_ingredient_ids, load_recipe_names
@@ -43,45 +43,25 @@ def inject_user():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    error = {}
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "").strip()
-        users = load_users()
-
-        if username in users:
-            error["username"] = "Username already exists. Want to login?"
-        elif not username or not password:
-            error["username"] = "Username and password are required."
-
-        if not error:
-            users[username] = {
-                "password": password,
-                "search_history": [],
-                "viewed_recipes": []
-            }
-            save_users(users)
-            session["username"] = username
-            return redirect(url_for("index"))
-
-    return render_template("register.html", error=error)
+    return redirect(url_for("register_email_step1"))
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = {}
     if request.method == "POST":
-        username = request.form.get("username", "").strip()
+        email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
         users = load_users()
+        matched_user = next((u for u, info in users.items() if info.get("email") == email), None)
 
-        if username not in users:
-            error["username"] = "Invalid username. Want to register?"
-        elif users[username]["password"] != password:
+        if not matched_user:
+            error["email"] = "Email not found. Want to register?"
+        elif users[matched_user]["password"] != password:
             error["password"] = "Incorrect password."
 
         if not error:
-            session["username"] = username
+            session["username"] = matched_user
             return redirect(url_for("index"))
 
     return render_template("login.html", error=error)
@@ -204,6 +184,126 @@ def profile():
                            search_history=search_history,
                            viewed_recipes=viewed_recipes)
 
+
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+import random
+import re
+
+
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+app.config.update({
+    "MAIL_SERVER": "smtp.gmail.com",
+    "MAIL_PORT": 587,
+    "MAIL_USE_TLS": True,
+    "MAIL_USERNAME": "zihe030716@gmail.com",  
+    "MAIL_PASSWORD": "bbvgjaqcvkjpbjfu",    
+    "MAIL_DEFAULT_SENDER": "zihe030716@gmail.com"
+})
+
+mail = Mail(app)
+
+
+def is_valid_email(email):
+    return re.match(r"[^@]+@[^@]+\.[^@]+", email)
+
+def send_verification_code(email, code):
+    msg = Message(
+        subject="Your RecipeApp Verification Code",
+        recipients=[email],
+        body=f"Your verification code is: {code}"
+    )
+    mail.send(msg)
+    return True
+
+@app.route("/register_email", methods=["GET", "POST"])
+def register_email_step1():
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        if not is_valid_email(email):
+            error = "Please enter a valid email address."
+        else:
+            code = str(random.randint(100000, 999999))
+            session["verify_code"] = code
+            session["verify_email"] = email
+            send_verification_code(email, code)
+            return redirect(url_for("register_email_step2"))
+    return render_template("register_step1.html", error=error)
+
+@app.route("/register_verify", methods=["GET", "POST"])
+def register_email_step2():
+    error = None
+    if request.method == "POST":
+        input_code = request.form.get("code", "").strip()
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        users = load_users()
+
+        if input_code != session.get("verify_code"):
+            error = "Incorrect verification code."
+        elif username in users:
+            error = "Username already taken."
+        else:
+            users[username] = {
+                "password": password,
+                "email": session["verify_email"],
+                "search_history": [],
+                "viewed_recipes": []
+            }
+            save_users(users)
+            session["username"] = username
+            session.pop("verify_code", None)
+            session.pop("verify_email", None)
+            return redirect(url_for("index"))
+
+    return render_template("register_step2.html", error=error)
+
+@app.route("/reset_request", methods=["GET", "POST"])
+def reset_request():
+    error = None
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        users = load_users()
+        user_exists = any(user.get("email") == email for user in users.values())
+
+        if not is_valid_email(email):
+            error = "Please enter a valid email address."
+        elif not user_exists:
+            error = "No account is linked with this email."
+        else:
+            code = str(random.randint(100000, 999999))
+            session["reset_code"] = code
+            session["reset_email"] = email
+            send_verification_code(email, code)
+            return redirect(url_for("reset_verify"))
+
+    return render_template("reset_request.html", error=error)
+
+@app.route("/reset_verify", methods=["GET", "POST"])
+def reset_verify():
+    error = None
+    if request.method == "POST":
+        code = request.form.get("code", "").strip()
+        new_password = request.form.get("password", "").strip()
+        email = session.get("reset_email")
+        users = load_users()
+
+        target_user = next((u for u in users if users[u]["email"] == email), None)
+
+        if code != session.get("reset_code"):
+            error = "Incorrect verification code."
+        elif not target_user:
+            error = "User not found."
+        else:
+            users[target_user]["password"] = new_password
+            save_users(users)
+            session.pop("reset_code", None)
+            session.pop("reset_email", None)
+            return redirect(url_for("login"))
+
+    return render_template("reset_verify.html", error=error)
 
 
 if __name__ == "__main__":
