@@ -1,1 +1,88 @@
-# Foodielicious
+# Project Setup and Usage Instructions
+
+This guide provides clear step-by-step instructions to help you set up and access the project environment.
+
+---
+
+## 📋 Prerequisites
+
+### 1. **Docker Installation**
+
+Install Docker on your machine by following the official guide:
+
+[Docker Installation Guide](https://www.docker.com/get-started)
+
+### 2. **Elasticsearch Setup**
+
+- Download and install Elasticsearch locally.
+- Ensure Elasticsearch service is running on the default port (`9200`) or a custom port you specify.
+
+### 3. **Upload Dataset**
+
+Upload the provided dataset into your local Elasticsearch instance using your preferred indexing method.
+
+---
+
+## 🛠 Repository Setup
+
+### 1. **Clone the Repository**
+
+Open your terminal and run:
+
+```bash
+git clone https://github.com/flamango04/Foodielicious.git
+```
+
+### 2. **Navigate to the Project Directory**
+
+Change your working directory to `real_process`:
+
+```bash
+cd real_process
+```
+
+---
+
+## ⚙️ Configuration
+
+### 1. **Editing the Configuration (`app.py`)**
+
+Open the `app.py` file in your code editor.
+
+### 2. **Update Elasticsearch Credentials**
+
+Find line **109**:
+
+```python
+        basic_auth=("elastic", "7KYl8Zpm"),
+```
+
+Replace `"elastic"` and `"7KYl8Zpm"` with your own Elasticsearch username and password.
+
+---
+
+## 🚀 Running the Application
+
+### 1. **Start the Application**
+
+Run the `app.py` file from your terminal:
+
+```bash
+python app.py
+```
+
+> **Note:** Ensure your Python environment is properly configured and that all necessary dependencies are installed.
+
+### 2. **Accessing the Application**
+
+In your web browser, navigate to:
+
+```bash
+http://localhost:9200
+```
+
+Your application should now be accessible and fully functional.
+
+---
+
+🎉 **You're all set! Happy coding!**
