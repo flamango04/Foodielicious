@@ -14,7 +14,7 @@ Install Docker on your machine by following the official guide:
 
 ### 2. **Elasticsearch Setup**
 
-- Download and install Elasticsearch locally.
+- Download and install [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) locally.
 - Ensure Elasticsearch service is running on the default port (`9200`) or a custom port you specify.
 
 ### 3. **Upload Dataset**
@@ -45,7 +45,7 @@ cd real_process
 
 ## ⚙️ Configuration
 
-### 1. **Editing the Configuration (`app.py`)**
+### 1. **Editing the Configuration (********`app.py`********)**
 
 Open the `app.py` file in your code editor.
 
@@ -86,3 +86,4 @@ Your application should now be accessible and fully functional.
 ---
 
 🎉 **You're all set! Happy coding!**
+
