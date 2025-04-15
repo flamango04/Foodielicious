@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ username }}'s Profile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-purple-100 via-white to-blue-100 font-sans px-4 py-8 text-gray-800">
+  <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl p-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b pb-4">
+      <div>
+        <h1 class="text-4xl font-bold mb-1">👋 Hello, <span class="text-blue-600">{{ username }}</span></h1>
+        <p class="text-gray-500 text-sm">Here is your profile overview.</p>
+      </div>
+      <a href="/" class="mt-4 sm:mt-0 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">← Back to Search</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Search History -->
+      <div class="bg-blue-50 p-6 rounded-xl shadow">
+        <h2 class="text-xl font-semibold text-blue-700 mb-4">🔍 Search History</h2>
+        {% if search_history %}
+          <ul class="list-disc list-inside space-y-2 text-gray-700">
+            {% for history in search_history %}
+              <li class="bg-white p-2 rounded shadow-sm">{{ history }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-gray-500 italic">No searches yet.</p>
+        {% endif %}
+      </div>
+
+      <!-- Viewed Recipes -->
+      <div class="bg-green-50 p-6 rounded-xl shadow">
+        <h2 class="text-xl font-semibold text-green-700 mb-4">📖 Viewed Recipes</h2>
+        {% if viewed_recipes %}
+          <ul class="space-y-3">
+            {% for recipe in viewed_recipes %}
+              <li class="flex justify-between items-center bg-white p-3 rounded shadow-sm">
+                <span>{{ recipe.name }}</span>
+                <a href="/recipe/{{ recipe.id }}" class="text-green-600 hover:underline text-sm">View</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-gray-500 italic">No recipes viewed yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>
