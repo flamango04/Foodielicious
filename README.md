@@ -19,6 +19,8 @@ Install Docker on your machine by following the official guide:
 
 ### 3. **Upload Dataset**
 
+Download the dataset from [this link](https://drive.google.com/file/d/1GNYjlfCWtUFmCm3kXzfHHgyQBMmC9eEP/view).
+
 Upload the provided dataset into your local Elasticsearch instance using your preferred indexing method.
 
 ---
