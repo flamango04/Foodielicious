@@ -39,6 +39,18 @@ def convert_ingredients_to_ids(ingredients, ingredient_mapping):
             print(f"Ingredient '{ingredient}' not found in the mapping.")
     return ids
 
+def load_recipe_details(id, csv_file_path):
+    with open(csv_file_path, mode="r", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if id == int(row["id"]):
+                minutes = row["minutes"]
+                nutrition = row["nutrition"]
+                steps = row["steps"]
+                description = row["description"]
+                recipe_ingredients = row["ingredients"]
+
+    return minutes, nutrition, steps, description, recipe_ingredients
 
 def search_recipes_by_ingredient_ids(es, index_name, ingredient_ids, match_all=True):
     if not ingredient_ids:

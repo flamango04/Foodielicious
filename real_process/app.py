@@ -5,7 +5,7 @@ import pandas as pd
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from elasticsearch import Elasticsearch
 from dotenv import load_dotenv
-from testing_ingredient import load_ingredient_mapping, convert_ingredients_to_ids, search_recipes_by_ingredient_ids, load_recipe_names
+from testing_ingredient import load_recipe_details, load_ingredient_mapping, convert_ingredients_to_ids, search_recipes_by_ingredient_ids, load_recipe_names
 from youtubelinks import search_youtube
 
 load_dotenv()
@@ -53,18 +53,21 @@ def login():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
         users = load_users()
-        matched_user = next((u for u, info in users.items() if info.get("email") == email), None)
 
-        if not matched_user:
+        user = users.get(email)
+
+        if not user:
             error["email"] = "Email not found. Want to register?"
-        elif users[matched_user]["password"] != password:
+        elif user["password"] != password:
             error["password"] = "Incorrect password."
 
         if not error:
-            session["username"] = matched_user
+            session["username"] = user["username"] 
+            session["email"] = email             
             return redirect(url_for("index"))
 
     return render_template("login.html", error=error)
+
 
 
 @app.route("/logout")
@@ -102,23 +105,25 @@ def get_recipe_data_from_ingredients(ingredients):
     return recipe_data
 
 @app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         selected_ingredients = request.form.get("selected_ingredients", "").strip()
         session["selected_ingredients"] = selected_ingredients
         ingredients = [i.strip() for i in selected_ingredients.split(",") if i.strip()]
         recipe_data = get_recipe_data_from_ingredients(ingredients)
-
-        # Save user search history
-        if "username" in session:
+        if "email" in session:
             users = load_users()
-            username = session["username"]
-            users[username]["search_history"].append(selected_ingredients)
+            email = session["email"]
+            if "search_history" not in users[email]:
+                users[email]["search_history"] = []
+            users[email]["search_history"].append(selected_ingredients)
             save_users(users)
 
         return render_template("results.html", ingredients=selected_ingredients, recipe_data=recipe_data)
 
     return render_template("index.html")
+
 
 @app.route("/results")
 def results_page():
@@ -143,24 +148,25 @@ def validate_ingredient():
 @app.route("/recipe/<int:recipe_id>")
 def recipe_detail(recipe_id):
     recipe_name = recipe_names_mapping.get(recipe_id, "Recipe Not Found")
+    minutes, nutrition, steps, description, recipe_ingredients = load_recipe_details(recipe_id, RECIPES_CSV_PATH)
     video_results = search_youtube(f"how to make {recipe_name}", api_key=YOUTUBE_API_KEY)
 
     review_data = all_reviews.get(str(recipe_id), {})
     ratings = review_data.get("rating", [])
     reviews = review_data.get("review", [])
     ratings_reviews = list(zip(ratings, reviews))
-
-    # Save viewed recipe
-    if "username" in session:
-        users = load_users()
-        username = session["username"]
-        viewed = users[username].setdefault("viewed_recipes", [])
-        if recipe_id not in viewed:
-            viewed.append(recipe_id)
-            save_users(users)
+    ingredients = [recipe_ingredients]
+    mins = [minutes]
+    calories = nutrition[1:]
+    calories = [calories.split(",")[0]]
+    print("calories: " + str(calories))
+    details = list(zip(ingredients, calories, mins))
 
     return render_template("recipe_detail.html",
                            recipe_name=recipe_name,
+                           details=details,
+                           steps=steps,
+                           description=description,
                            video_results=video_results,
                            ratings_reviews=ratings_reviews)
 
@@ -221,9 +227,12 @@ def send_verification_code(email, code):
 def register_email_step1():
     error = None
     if request.method == "POST":
+        users = load_users()
         email = request.form.get("email", "").strip().lower()
         if not is_valid_email(email):
             error = "Please enter a valid email address."
+        elif email in users:
+            error = "This email is already registered."
         else:
             code = str(random.randint(100000, 999999))
             session["verify_code"] = code
@@ -240,25 +249,26 @@ def register_email_step2():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         users = load_users()
+        email = session.get("verify_email")
 
         if input_code != session.get("verify_code"):
             error = "Incorrect verification code."
-        elif username in users:
-            error = "Username already taken."
         else:
-            users[username] = {
+            users[email] = {
+                "username": username,
                 "password": password,
-                "email": session["verify_email"],
                 "search_history": [],
                 "viewed_recipes": []
             }
             save_users(users)
-            session["username"] = username
+            session["username"] = username 
+            session["email"] = email      
             session.pop("verify_code", None)
             session.pop("verify_email", None)
             return redirect(url_for("index"))
 
     return render_template("register_step2.html", error=error)
+
 
 @app.route("/reset_request", methods=["GET", "POST"])
 def reset_request():
@@ -266,11 +276,10 @@ def reset_request():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         users = load_users()
-        user_exists = any(user.get("email") == email for user in users.values())
 
         if not is_valid_email(email):
             error = "Please enter a valid email address."
-        elif not user_exists:
+        elif email not in users:
             error = "No account is linked with this email."
         else:
             code = str(random.randint(100000, 999999))
@@ -281,6 +290,7 @@ def reset_request():
 
     return render_template("reset_request.html", error=error)
 
+
 @app.route("/reset_verify", methods=["GET", "POST"])
 def reset_verify():
     error = None
@@ -290,20 +300,19 @@ def reset_verify():
         email = session.get("reset_email")
         users = load_users()
 
-        target_user = next((u for u in users if users[u]["email"] == email), None)
-
         if code != session.get("reset_code"):
             error = "Incorrect verification code."
-        elif not target_user:
+        elif email not in users:
             error = "User not found."
         else:
-            users[target_user]["password"] = new_password
+            users[email]["password"] = new_password
             save_users(users)
             session.pop("reset_code", None)
             session.pop("reset_email", None)
             return redirect(url_for("login"))
 
     return render_template("reset_verify.html", error=error)
+
 
 
 if __name__ == "__main__":
