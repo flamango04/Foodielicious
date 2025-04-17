@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch
 from dotenv import load_dotenv
 from testing_ingredient import load_recipe_details, load_ingredient_mapping, convert_ingredients_to_ids, search_recipes_by_ingredient_ids, load_recipe_names
 from youtubelinks import search_youtube
-
+import requests
 load_dotenv()
 
 app = Flask(__name__)
@@ -105,7 +105,6 @@ def get_recipe_data_from_ingredients(ingredients):
     return recipe_data
 
 @app.route("/", methods=["GET", "POST"])
-@app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         selected_ingredients = request.form.get("selected_ingredients", "").strip()
@@ -132,11 +131,14 @@ def results_page():
     recipe_data = get_recipe_data_from_ingredients(ingredients)
 
     user_history = []
-    if "username" in session:
+    if "email" in session:
         users = load_users()
-        user_history = users.get(session["username"], {}).get("search_history", [])
+        user_history = users.get(session["email"], {}).get("search_history", [])
 
-    return render_template("results.html", ingredients=selected_ingredients, recipe_data=recipe_data, user_history=user_history)
+    return render_template("results.html",
+                           ingredients=selected_ingredients,
+                           recipe_data=recipe_data,
+                           user_history=user_history)
 
 @app.route("/validate_ingredient", methods=["GET"])
 def validate_ingredient():
@@ -150,6 +152,17 @@ def recipe_detail(recipe_id):
     recipe_name = recipe_names_mapping.get(recipe_id, "Recipe Not Found")
     minutes, nutrition, steps, description, recipe_ingredients = load_recipe_details(recipe_id, RECIPES_CSV_PATH)
     video_results = search_youtube(f"how to make {recipe_name}", api_key=YOUTUBE_API_KEY)
+
+    if "email" in session:
+        users = load_users()
+        user_data = users.get(session["email"], {})
+
+        viewed = user_data.get("viewed_recipes", [])
+        if recipe_id not in viewed:
+            viewed.append(recipe_id)
+            user_data["viewed_recipes"] = viewed
+            users[session["email"]] = user_data
+            save_users(users)
 
     review_data = all_reviews.get(str(recipe_id), {})
     ratings = review_data.get("rating", [])
@@ -170,25 +183,30 @@ def recipe_detail(recipe_id):
                            video_results=video_results,
                            ratings_reviews=ratings_reviews)
 
+
 @app.route("/profile")
 def profile():
-    if "username" not in session:
+    if "email" not in session:
         return redirect(url_for("login"))
     
     users = load_users()
-    user_data = users.get(session["username"], {})
+    user_data = users.get(session["email"], {})
+    
+    username = user_data.get("username", "Unknown User")
     search_history = user_data.get("search_history", [])
     viewed_recipe_ids = user_data.get("viewed_recipes", [])
-    
+
     viewed_recipes = [
         {"id": rid, "name": recipe_names_mapping.get(rid, "Name not found")}
         for rid in viewed_recipe_ids
     ]
 
     return render_template("profile.html",
-                           username=session["username"],
+                           email=session["email"],
+                           username=username,
                            search_history=search_history,
                            viewed_recipes=viewed_recipes)
+
 
 
 from flask_mail import Mail, Message
@@ -313,7 +331,48 @@ def reset_verify():
 
     return render_template("reset_verify.html", error=error)
 
+@app.route('/ask', methods=['POST'])
+def ask_gpt():
+    try:
+        user_input = request.json.get("question", "").strip()
+        if not user_input:
+            return jsonify({"answer": "Please enter a valid question."}), 400
 
+        # Format prompt for a cooking assistant
+        prompt = f"Answer the following cooking-related question:\n{user_input}"
+
+        headers = {
+            "Authorization": f"Bearer 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",
+        }
+
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 100,
+                "temperature": 0.7,
+                "return_full_text": True
+            }
+        }
+
+        # Replace model URL if using a different one
+        hf_response = requests.post(
+            "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
+            headers=headers,
+            json=payload
+        )
+
+        if hf_response.status_code != 200:
+            error_info = hf_response.json()
+            return jsonify({"answer": f"Error: {error_info.get('error', 'Unknown error')}"}), 500
+
+        result = hf_response.json()
+        if isinstance(result, list) and "generated_text" in result[0]:
+            return jsonify({"answer": result[0]["generated_text"]})
+        else:
+            return jsonify({"answer": "Sorry, I couldn't understand the response."})
+
+    except Exception as e:
+        return jsonify({"answer": f"Server error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

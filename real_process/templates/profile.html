@@ -10,7 +10,7 @@
   <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-2xl p-8">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b pb-4">
       <div>
-        <h1 class="text-4xl font-bold mb-1">👋 Hello, <span class="text-blue-600">{{ username }}</span></h1>
+        <h1 class="text-4xl font-bold mb-1">Hello, <span class="text-blue-600">{{ username }}</span></h1>
         <p class="text-gray-500 text-sm">Here is your profile overview.</p>
       </div>
       <a href="/" class="mt-4 sm:mt-0 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">← Back to Search</a>
@@ -19,7 +19,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <!-- Search History -->
       <div class="bg-blue-50 p-6 rounded-xl shadow">
-        <h2 class="text-xl font-semibold text-blue-700 mb-4">🔍 Search History</h2>
+        <h2 class="text-xl font-semibold text-blue-700 mb-4">Search History</h2>
         {% if search_history %}
           <ul class="list-disc list-inside space-y-2 text-gray-700">
             {% for history in search_history %}
@@ -33,7 +33,7 @@
 
       <!-- Viewed Recipes -->
       <div class="bg-green-50 p-6 rounded-xl shadow">
-        <h2 class="text-xl font-semibold text-green-700 mb-4">📖 Viewed Recipes</h2>
+        <h2 class="text-xl font-semibold text-green-700 mb-4">Viewed Recipes</h2>
         {% if viewed_recipes %}
           <ul class="space-y-3">
             {% for recipe in viewed_recipes %}

@@ -26,5 +26,115 @@
       <a href="/" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Back to Search</a>
     </div>
   </div>
+
+  <div id="chatbox" class="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-lg border transition-all duration-300">
+    <div class="bg-blue-500 text-white p-4 rounded-t-lg flex justify-between items-center">
+      <h3 class="font-semibold">Recipe Assistant</h3>
+      <button onclick="toggleChat()" class="text-white text-xl hover:text-blue-200 font-bold">−</button>
+    </div>
+    <div id="chat-messages" class="h-64 p-4 overflow-y-auto bg-gray-50">
+      <div class="chat-message bot">Hi! Ask me about these recipes or ingredients!</div>
+    </div>
+    <div class="p-4 border-t">
+      <div class="flex gap-2">
+        <input type="text" id="user-input" 
+              class="flex-1 border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Type your question...">
+        <button onclick="sendMessage()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+          Send
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .chat-message {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 0.75rem;
+        max-width: 85%;
+        font-size: 0.875rem;
+    }
+    .chat-message.user {
+        background-color: #3b82f6;
+        color: white;
+        margin-left: auto;
+    }
+    .chat-message.bot {
+        background-color: #f3f4f6;
+        color: #1f2937;
+        margin-right: auto;
+    }
+    #chat-messages {
+        max-height: 300px;
+        padding: 0.5rem;
+    }
+  </style>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const messagesDiv = document.getElementById('chat-messages');
+      const question = input.value.trim();
+
+      if (!question) return;
+
+      messagesDiv.innerHTML += `<div class="chat-message user">${question}</div>`;
+      input.value = '';
+      input.disabled = true;
+      const sendButton = document.querySelector('button[onclick="sendMessage()"]');
+      sendButton.disabled = true;
+
+      try {
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.answer || 'API request failed');
+        }
+
+        const data = await response.json();
+        messagesDiv.innerHTML += `<div class="chat-message bot" id="bot-response"></div>`;
+        const botResponse = document.getElementById('bot-response');
+        let answer = data.answer;
+        let index = 0;
+
+        function typeAnswer() {
+          if (index < answer.length) {
+            botResponse.innerHTML += answer[index];
+            index++;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            setTimeout(typeAnswer, 20);
+          } else {
+            botResponse.removeAttribute('id');
+          }
+        }
+
+        typeAnswer();
+
+      } catch (error) {
+        console.error('Error:', error);
+        messagesDiv.innerHTML += `
+          <div class="chat-message bot error-message text-red-500">
+            ${error.message}
+          </div>
+        `;
+      } finally {
+        input.disabled = false;
+        sendButton.disabled = false;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+    }
+
+    function toggleChat() {
+      const chatbox = document.getElementById("chatbox");
+      chatbox.classList.toggle("hidden");
+    }
+  </script>
 </body>
 </html>
