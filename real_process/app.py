@@ -325,7 +325,7 @@ def ask_gpt():
         prompt = f"Answer the following cooking-related question:\n{user_input}"
 
         headers = {
-            "Authorization": f"Bearer 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"
+            "Authorization": f"Bearer <huggingface_access_token>"
         }
 
         payload = {
