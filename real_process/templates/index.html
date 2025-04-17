@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find Recipes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to top right, #dbeafe, #f0fdfa, #fef9c3);
+      transition: background-color 0.5s, color 0.5s;
+    }
+    [data-theme='dark'] body {
+      background: #1e293b;
+      color: #e2e8f0;
+    }
+
+    #suggestions {
+      position: absolute;
+      width: 100%;
+      background: white;
+      border: 1px solid #ddd;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      border-radius: 0 0 0.5rem 0.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .suggestion-item {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .suggestion-item:hover {
+      background-color: #f1f5f9;
+    }
+    .selected-ingredient {
+      display: inline-flex;
+      align-items: center;
+      background-color: #dbeafe;
+      color: #1e3a8a;
+      padding: 6px 12px;
+      margin: 5px;
+      border-radius: 9999px;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .remove-btn {
+      margin-left: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    [data-theme='dark'] .selected-ingredient {
+      background-color: #334155;
+      color: #f1f5f9;
+    }
+    [data-theme='dark'] #suggestions {
+      background: #1e293b;
+      color: white;
+      border-color: #334155;
+    }
+    [data-theme='dark'] .suggestion-item:hover {
+      background-color: #334155;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center font-sans px-4 transition duration-300 ease-in-out">
+
+  <div class="absolute top-4 left-6 space-x-4 text-sm">
+    {% if logged_in %}
+      <span class="text-gray-700 dark:text-gray-300">👤 {{ current_user }}</span>
+      <a href="/profile" class="text-purple-600 underline">Profile</a>
+      <a href="/logout" class="text-red-500 underline">Logout</a>
+    {% else %}
+      <a href="/login" class="text-blue-600 underline">Login</a>
+      <a href="/register" class="text-green-600 underline">Register</a>
+    {% endif %}
+  </div>
+
+  <div class="absolute top-4 right-6">
+    <label class="flex items-center space-x-2 cursor-pointer text-sm">
+      <span class="text-gray-700 dark:text-gray-300">Dark Mode</span>
+      <input id="toggle-theme" type="checkbox" class="toggle hidden" />
+      <div class="w-10 h-5 bg-gray-300 rounded-full relative">
+        <div class="dot w-5 h-5 bg-white rounded-full shadow absolute left-0 top-0 transition"></div>
+      </div>
+    </label>
+  </div>
+
+  <h1 class="text-4xl font-bold mb-8 text-center text-gray-800 drop-shadow-md dark:text-white">
+    🍽️ Find Recipes & Ingredients
+  </h1>
+
+  <form method="POST" id="search-form" class="w-full max-w-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-white/30 p-8 rounded-2xl shadow-xl relative transition-all transform scale-95 opacity-0">
+    <label for="ingredients" class="block text-gray-700 dark:text-gray-200 font-medium text-lg mb-1">Enter ingredients:</label>
+
+    <input 
+      type="text" 
+      id="ingredients" 
+      class="w-full p-3 mt-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition dark:bg-slate-700 dark:text-white dark:border-slate-600" 
+      placeholder="Type an ingredient..." 
+      autocomplete="off" 
+    />
+
+    <div id="suggestions" class="rounded-b-lg shadow-md dark:bg-slate-800"></div>
+
+    <p id="ingredient-error" class="text-red-600 mt-2 text-sm"></p>
+
+    <div id="selected-ingredients" class="mt-3 flex flex-wrap gap-2"></div>
+
+    <input type="hidden" name="selected_ingredients" id="selected_ingredients_input" />
+
+    <button 
+      type="submit" 
+      class="mt-5 w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-blue-600 hover:to-indigo-600 transition duration-200 shadow-md hover:shadow-lg"
+    >
+      🔍 Search
+    </button>
+  </form>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const inputField = document.getElementById("ingredients");
+      const suggestionBox = document.getElementById("suggestions");
+      const selectedContainer = document.getElementById("selected-ingredients");
+      const hiddenInput = document.getElementById("selected_ingredients_input");
+      const errorBox = document.getElementById("ingredient-error");
+      const searchForm = document.getElementById("search-form");
+      const toggle = document.getElementById("toggle-theme");
+      let selectedIngredients = [];
+
+      const emojiMap = {
+        egg: "🥚", tomato: "🍅", milk: "🥛", chicken: "🍗", garlic: "🧄",
+        cheese: "🧀", onion: "🧅", fish: "🐟", banana: "🍌", apple: "🍎",
+      };
+
+      const root = document.documentElement;
+      toggle.checked = localStorage.getItem("theme") === "dark";
+      applyTheme();
+
+      toggle.addEventListener("change", () => {
+        localStorage.setItem("theme", toggle.checked ? "dark" : "light");
+        applyTheme();
+      });
+
+      function applyTheme() {
+        root.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+        document.querySelector('.dot').style.left = toggle.checked ? "calc(100% - 1.25rem)" : "0";
+      }
+
+      setTimeout(() => {
+        searchForm.classList.remove("scale-95", "opacity-0");
+        searchForm.classList.add("scale-100", "opacity-100");
+      }, 100);
+
+      inputField.addEventListener("input", function () {
+        let query = inputField.value.trim();
+        if (query.length < 2) {
+          suggestionBox.style.display = "none";
+          return;
+        }
+
+        fetch(`/autocomplete?query=${query}`)
+          .then(response => response.json())
+          .then(data => {
+            suggestionBox.innerHTML = "";
+            if (data.length === 0) {
+              suggestionBox.style.display = "none";
+              return;
+            }
+
+            suggestionBox.style.display = "block";
+            data.forEach(item => {
+              let suggestion = document.createElement("div");
+              suggestion.textContent = item;
+              suggestion.classList.add("suggestion-item");
+              suggestion.onclick = function () {
+                addIngredient(item);
+              };
+              suggestionBox.appendChild(suggestion);
+            });
+          });
+      });
+
+      inputField.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          let enteredValue = inputField.value.trim().toLowerCase();
+          if (enteredValue === "") {
+            if (selectedIngredients.length > 0) {
+              searchForm.submit();
+            }
+            return;
+          }
+
+          fetch(`/validate_ingredient?ingredient=${encodeURIComponent(enteredValue)}`)
+            .then(response => response.json())
+            .then(data => {
+              if (!data.valid) {
+                errorBox.textContent = `"${enteredValue}" is not in our ingredient list.`;
+                setTimeout(() => {
+                  if (errorBox.textContent === `"${enteredValue}" is not in our ingredient list.`) {
+                    errorBox.textContent = "";
+                  }
+                }, 1000);
+              } else {
+                errorBox.textContent = "";
+                addIngredient(enteredValue);
+              }
+            })
+            .catch(err => {
+              console.error("Validation error:", err);
+              errorBox.textContent = "Unable to validate ingredient.";
+              setTimeout(() => {
+                if (errorBox.textContent === "Unable to validate ingredient.") {
+                  errorBox.textContent = "";
+                }
+              }, 1000);
+            });
+        }
+      });
+
+      function addIngredient(ingredient) {
+        if (!selectedIngredients.includes(ingredient)) {
+          selectedIngredients.push(ingredient);
+          updateSelectedIngredients();
+        }
+        inputField.value = "";
+        suggestionBox.style.display = "none";
+      }
+
+      function removeIngredient(ingredient) {
+        selectedIngredients = selectedIngredients.filter(item => item !== ingredient);
+        updateSelectedIngredients();
+      }
+
+      function updateSelectedIngredients() {
+        selectedContainer.innerHTML = "";
+        selectedIngredients.forEach(ingredient => {
+          let tag = document.createElement("div");
+          tag.classList.add("selected-ingredient");
+
+          let emoji = emojiMap[ingredient.toLowerCase()] || "";
+          let text = document.createTextNode(`${emoji} ${ingredient}`);
+
+          let removeBtn = document.createElement("span");
+          removeBtn.textContent = " ×";
+          removeBtn.classList.add("remove-btn");
+          removeBtn.onclick = function () {
+            removeIngredient(ingredient);
+          };
+
+          tag.append(text, removeBtn);
+          selectedContainer.appendChild(tag);
+        });
+
+        hiddenInput.value = selectedIngredients.join(",");
+      }
+    });
+  </script>
+</body>
+</html>

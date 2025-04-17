@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verify Code & Reset</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-red-100 flex items-center justify-center px-4">
+  <form method="POST" class="bg-white p-6 rounded-xl shadow-md w-full max-w-md space-y-4">
+    <h2 class="text-2xl font-bold">Enter Code & Set New Password</h2>
+    {% if error %}
+      <p class="text-red-500 text-sm">{{ error }}</p>
+    {% endif %}
+    <input type="text" name="code" placeholder="6-digit code" required
+           class="w-full px-4 py-2 border rounded focus:ring focus:ring-red-300" />
+    <input type="password" name="password" placeholder="New Password" required
+           class="w-full px-4 py-2 border rounded focus:ring focus:ring-red-300" />
+    <button type="submit" class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition">Reset Password</button>
+  </form>
+</body>
+</html>
