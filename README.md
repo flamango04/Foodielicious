@@ -69,7 +69,7 @@ Replace `"elastic"` and `"7KYl8Zpm"` with your own Elasticsearch username and pa
 - Navigate to your "Settings" and then go to "Access Tokens"
 - Click on the "Create New Token" button, name your token, and select all the role/permissions available
 - Generate the token and copy the token 
-- Find line **328**
+- Find line **328**:
 ```python
         "Authorization": f"Bearer <huggingface_access_token>"
 ```
