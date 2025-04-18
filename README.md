@@ -17,7 +17,16 @@ Install Docker on your machine by following the official guide:
 - Download and install [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) locally.
 - Ensure Elasticsearch service is running on the default port (`9200`) or a custom port you specify.
 
-### 3. **Upload Dataset**
+## 3. **Hugging Face Access Token**
+
+- Navigate to the official [Hugging Face website](https://huggingface.co.)
+- Log in to your account or sign up if you don't have an account
+- Navigate to your "Settings" and then go to "Access Tokens"
+- Click on the "Create New Token" button, name your token, and select all the role/permissions available
+- Generate the token and copy the token 
+- Paste the token over <huggingface_access_token> in app.py
+
+### 4. **Upload Dataset**
 
 Download the dataset from [this link](https://drive.google.com/file/d/1GNYjlfCWtUFmCm3kXzfHHgyQBMmC9eEP/view).
 
