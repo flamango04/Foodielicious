@@ -18,7 +18,7 @@ MAPPING_CSV_PATH = "../dataset/ingr_map.csv"
 RECIPES_CSV_PATH = "../dataset/RAW_recipes.csv"
 REVIEW_JSON_PATH = "../dataset/recipes_reviews.json"
 USER_DATA_PATH = "data/users.json"
-YOUTUBE_API_KEY = "AIzaSyAaS-mrZjYwML4-ZKH6A18F2sViuvbfWsM"
+YOUTUBE_API_KEY = "YOUR_YOUTUBE_API_KEY"
 
 # === Load Data ===
 ingredient_mapping = load_ingredient_mapping(MAPPING_CSV_PATH)
